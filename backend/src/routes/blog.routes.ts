@@ -26,12 +26,21 @@ blogs.use("/*",async (c,next)=>{
     const header = c.req.header("authorization")||"";
     // Bearer token
     const token=header.split(" ")[1];
-
-    const response= await verify(token,c.env.JWT_Secret,"HS256");
-    if(response.id){
-        c.set("userid",String(response.id));
-        await next()
-    }else{
+    if(!token){
+        c.status(403)
+        return c.json({error:"Unauthorized"});
+    }
+    try{
+        const response= await verify(token,c.env.JWT_Secret,"HS256");
+        if(response.id){
+            c.set("userid",String(response.id));
+            await next()
+        }else{
+            c.status(403)
+            return c.json({error:"Unauthorized"});
+        }
+    }
+    catch(e){
         c.status(403)
         return c.json({error:"Unauthorized"});
     }
@@ -94,7 +103,7 @@ blogs.put("/",async (c)=>{
     }
     
 })
-blogs.get("/",async (c)=>{
+blogs.get("/myblogs",async (c)=>{
     const authorID=c.get('userid')
     const prisma = new PrismaClient({
         accelerateUrl: c.env.ACCELERATE_URL,
@@ -102,6 +111,18 @@ blogs.get("/",async (c)=>{
 
     try{
         const blogs= await prisma.post.findMany({
+            select:{
+                content:true,
+                title:true,
+                published:true,
+                id:true,
+                publishedate:true,
+                author:{
+                    select:{
+                        name:true
+                    }
+                }
+            },
             where:{
                 authorId:authorID
             }
@@ -113,27 +134,28 @@ blogs.get("/",async (c)=>{
         },401)
     }
 })
-blogs.get("/:id",async (c)=>{
+blogs.delete("/:id",async (c)=>{
+    const postid=c.req.param('id')
+    const authorID=c.get('userid')  
     const prisma = new PrismaClient({
         accelerateUrl: c.env.ACCELERATE_URL,
     }).$extends(withAccelerate());
     try{
-        const postid=c.req.param('id')
-        const blog= await prisma.post.findFirst({
+        await prisma.post.deleteMany({
             where:{
-                id:postid
+                id:postid,
+                authorId:authorID
             }
         })
         return c.json({
-            blog
+            message:"Deleted Successfully"
         },200)
     }catch(e){
         return c.json({
             error:e
         },401)
     }
-    
-})
+});
 
 
 export default blogs;

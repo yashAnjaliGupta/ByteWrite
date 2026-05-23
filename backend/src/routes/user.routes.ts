@@ -7,6 +7,8 @@ import {z} from "zod";
 
 const users= new Hono<{ Bindings: {ACCELERATE_URL: string,JWT_Secret: string} }>();
 
+
+
 const signupBody=z.object({
     name: z.string().min(5),
     email:z.email(),
@@ -81,6 +83,26 @@ users.post("/signin",async (c)=>{
         return c.json({error:e},409)
     }
     
+})
+users.get("/me",async (c)=>{
+    const prisma = new PrismaClient({
+    accelerateUrl: c.env.ACCELERATE_URL,
+    }).$extends(withAccelerate())
+    const header = c.req.header("authorization") || "";
+    if (!header.startsWith("Bearer ")) {
+        return c.json({ message: "Unauthorized" }, 401);
+    }
+    const token = header.slice(7);
+    const response = await verify(token, c.env.JWT_Secret, "HS256");
+    if (response && typeof response.id === "string") {
+        const User = await prisma.user.findUnique({
+            where:{
+                id: response.id
+            }
+        });
+        return c.json({ username: User?.name }, 200);
+    }
+    return c.json({ message: "Unauthorized" }, 401);
 })
 
 export default users;
