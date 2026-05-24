@@ -19,6 +19,9 @@ blogsPublic.get("/",async (c)=>{
 
     try{
         const blogs= await prisma.post.findMany({
+            where:{
+                published:true
+            },
             select:{
                 content:true,
                 title:true,

@@ -2,13 +2,16 @@ import axios from 'axios';
 import { SimpleEditor } from '../editor/components/tiptap-templates/simple/simple-editor'
 import { useState,useEffect } from 'react'
 import { BACKEND_URL } from '../config';
-import { useNavigate } from 'react-router';
+import { useNavigate,  useParams } from 'react-router';
 
 export function Publish() {
     const navigate=useNavigate();
+    const {id} = useParams<{ id: string }>();
     const [content, setContent] = useState("");
     const [title,setTitle]=useState("");
     const [isFullscreen, setIsFullscreen] = useState(false)
+    const [loading, setLoading] = useState(!!id); // Loading if editing
+    
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
@@ -22,20 +25,59 @@ export function Publish() {
             window.removeEventListener("keydown", handleEsc)
         }
     }, [])
+    // Fetch blog if editing
+    useEffect(() => {
+        if (id) {
+            console.log("Blog ID:", id);
+            axios.get(`${BACKEND_URL}/v1/api/publicblogs/${id}`, {
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("token")
+                }
+            })
+            .then(response => {
+                console.log("Blog data:", response.data);
+                setTitle(response.data.blog.title);
+                setContent(response.data.blog.content);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching blog:", err);
+                setLoading(false);
+            });
+        }
+    }, [id]);
 
-    async function publish(){
-        const response=await axios.post(`${BACKEND_URL}/v1/api/blogs`,{
-            title,
-            content
-        },{
-            headers:{
-                Authorization:"Bearer "+localStorage.getItem("token")
+    async function handlePublish() {
+        try {
+            if (id) {
+                // Update existing blog
+                await axios.put(`${BACKEND_URL}/v1/api/blogs`, {
+                    id,
+                    title,
+                    content
+                }, {
+                    headers: {
+                        Authorization: "Bearer " + localStorage.getItem("token")
+                    }
+                });
+                navigate(`/blog/${id}`);
+            } else {
+                // Create new blog
+                const response = await axios.post(`${BACKEND_URL}/v1/api/blogs`, {
+                    title,
+                    content
+                }, {
+                    headers: {
+                        Authorization: "Bearer " + localStorage.getItem("token")
+                    }
+                });
+                navigate(`/blog/${response.data.id}`);
             }
-        })
-        console.log(response.data);
-        navigate(`/blog/${response.data.id}`)
+        } catch (err) {
+            console.error("Error publishing:", err);
+        }
     }
-
+    if (loading) return <div>Loading...</div>;
     return (
         <div className="min-h-screen bg-gray-50 px-6 py-5">
             <div className="mx-auto max-w-6xl">
@@ -68,7 +110,7 @@ export function Publish() {
                     {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                 </button>
                 <button
-                    onClick={publish}
+                    onClick={handlePublish}
                     className=" mt-3 h-10 rounded-full bg-black px-5 py-2 text-sm font-medium text-white transition hover:bg-gray-800">
                     Publish
                 </button>

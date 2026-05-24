@@ -8,7 +8,6 @@ export function Blogs(){
     if(loading){
         return (<div>loading.....</div>)
     }
-
     return (<>
     <Appbar/>
     <div className="flex justify-center">

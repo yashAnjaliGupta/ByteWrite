@@ -1,9 +1,6 @@
 to be done 
-
-implement path protection 
-implement home 
-implement update using publish element
 update tailwind styling for mobile screens
+update state management
 
 feature 
 user info update page

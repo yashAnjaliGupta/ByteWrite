@@ -103,6 +103,30 @@ blogs.put("/",async (c)=>{
     }
     
 })
+blogs.patch("/",async (c)=>{
+    const body= await c.req.json();
+    const prisma = new PrismaClient({
+        accelerateUrl: c.env.ACCELERATE_URL,
+    }).$extends(withAccelerate());
+    try{
+        const blog= await prisma.post.update({
+            where:{
+                id:body.id
+            },
+            data: {
+                published: body.published
+            }
+        })
+        return c.json({
+            id:blog.id
+        },200)
+    }catch(e){
+        return c.json({
+            error:e
+        },401)
+    }
+    
+})
 blogs.get("/myblogs",async (c)=>{
     const authorID=c.get('userid')
     const prisma = new PrismaClient({

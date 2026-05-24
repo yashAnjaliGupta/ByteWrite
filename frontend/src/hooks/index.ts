@@ -38,6 +38,22 @@ export const useBlogs =()=>{
     const [blogs,setBlogs]=useState<Blog[]>([]);
 
     useEffect(()=>{
+        axios.get(`${BACKEND_URL}/v1/api/publicblogs`)
+        .then(response=>{
+            setBlogs(response.data)
+            setLoading(false);
+        })
+    },[])
+    return {
+        loading, blogs
+    }
+}
+
+export const useMyBlogs =()=>{
+    const [loading,setLoading]= useState(true);
+    const [blogs,setBlogs]=useState<Blog[]>([]);
+
+    useEffect(()=>{
         axios.get(`${BACKEND_URL}/v1/api/blogs/myblogs`,{
             headers:{
                 Authorization:"Bearer "+localStorage.getItem("token")

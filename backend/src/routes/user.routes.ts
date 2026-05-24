@@ -29,8 +29,7 @@ users.post("/signup",async (c)=>{
     if(!success){
         return c.json({ message: "Incorrect Input" }, 409);
     }
-    console.log(body,"after Parsing");
-    console.log(c.env.ACCELERATE_URL);
+
     try{
         const user= await prisma.user.findUnique({
             where:{
