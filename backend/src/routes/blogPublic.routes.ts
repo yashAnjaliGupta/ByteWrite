@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode,sign,verify } from "hono/jwt";
 import {z} from "zod";
+import {generatePreview} from "../utils";
 
 const blogsPublic= new Hono<{ 
     Bindings: {
@@ -20,7 +21,8 @@ blogsPublic.get("/",async (c)=>{
     try{
         const blogs= await prisma.post.findMany({
             where:{
-                published:true
+                published:true,
+                isDeleted:false
             },
             select:{
                 content:true,
@@ -35,7 +37,11 @@ blogsPublic.get("/",async (c)=>{
                 }
             }
         })
-        return c.json(blogs,200);
+        const blogsPreview = blogs.map((blog) => ({
+            ...blog,
+            content: generatePreview(blog.content, 100)
+        }))
+        return c.json(blogsPreview,200);
     }catch(e){
         return c.json({
             error:e
@@ -62,7 +68,8 @@ blogsPublic.get("/:id",async (c)=>{
                 }
             },
             where:{
-                id:postid
+                id:postid,
+                isDeleted:false
             }
         })
         return c.json({

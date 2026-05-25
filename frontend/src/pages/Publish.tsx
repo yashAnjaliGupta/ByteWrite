@@ -37,7 +37,7 @@ export function Publish() {
             .then(response => {
                 console.log("Blog data:", response.data);
                 setTitle(response.data.blog.title);
-                setContent(response.data.blog.content);
+                setContent(JSON.parse(response.data.blog.content));
                 setLoading(false);
             })
             .catch(err => {

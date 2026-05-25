@@ -4,10 +4,10 @@ export const Quote=()=>{
             <div className="flex justify-center">
                 <div className="max-w-lg ">
                     <div className="text-3xl font-bold">
-                        "When a layman see's it he praises it but when an Engineer see's it he says i can make it better"
+                        "A layman admires the product, An engineer admires the possibilities for improvement."
                     </div>
                     <div className="max-w-md text-left text-sm font-semibold my-2">
-                        Yash Gupta
+                        Engineer
                     </div>
                 </div>
             </div>

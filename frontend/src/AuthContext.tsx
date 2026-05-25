@@ -7,6 +7,7 @@ type AuthContextType = {
     loading: boolean;
     username: string;
     login: (u: string) => void;
+    logout:()=>void
 };
 
 type AuthProviderProps = {
@@ -49,9 +50,13 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
     const login=(u: string)=>{
         setIsAuthenticated(true);
         setUsername(u);
+    }
+    const logout=()=>{
+        setIsAuthenticated(false);
+        setUsername("")
     };
     return (
-        <AuthContext.Provider value={{isAuthenticated,loading, username ,login}}>
+        <AuthContext.Provider value={{isAuthenticated,loading, username ,login,logout}}>
             {children}
         </AuthContext.Provider>
     );

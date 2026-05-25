@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode,sign,verify } from "hono/jwt";
 import {z} from "zod";
+import {generatePreview} from "../utils"
+
 
 const createBlogBody=z.object({
     title: z.string().min(5),
@@ -86,7 +88,8 @@ blogs.put("/",async (c)=>{
     try{
         const blog= await prisma.post.update({
             where:{
-                id:body.id
+                id:body.id,
+                isDeleted:false
             },
             data: {
                 title:body.title,
@@ -111,7 +114,8 @@ blogs.patch("/",async (c)=>{
     try{
         const blog= await prisma.post.update({
             where:{
-                id:body.id
+                id:body.id,
+                isDeleted:false
             },
             data: {
                 published: body.published
@@ -148,10 +152,15 @@ blogs.get("/myblogs",async (c)=>{
                 }
             },
             where:{
-                authorId:authorID
+                authorId:authorID,
+                isDeleted:false
             }
         })
-        return c.json(blogs,200);
+        const blogsPreview = blogs.map((blog) => ({
+            ...blog,
+            content: generatePreview(blog.content, 150)
+        }))
+        return c.json(blogsPreview,200);
     }catch(e){
         return c.json({
             error:e
@@ -165,11 +174,16 @@ blogs.delete("/:id",async (c)=>{
         accelerateUrl: c.env.ACCELERATE_URL,
     }).$extends(withAccelerate());
     try{
-        await prisma.post.deleteMany({
+        await prisma.post.updateMany({
             where:{
                 id:postid,
-                authorId:authorID
+                authorId:authorID,
+                isDeleted:false
+            },
+            data:{
+                isDeleted:true
             }
+            
         })
         return c.json({
             message:"Deleted Successfully"

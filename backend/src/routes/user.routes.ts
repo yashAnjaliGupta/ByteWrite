@@ -5,7 +5,14 @@ import { decode,sign,verify } from "hono/jwt";
 import bcrypt from 'bcryptjs'
 import {z} from "zod";
 
-const users= new Hono<{ Bindings: {ACCELERATE_URL: string,JWT_Secret: string} }>();
+const users= new Hono<{ 
+    Bindings: {
+        ACCELERATE_URL: string,
+        JWT_Secret: string
+    };
+    Variables: {
+        userid: string;
+    };  }>();
 
 
 
@@ -83,25 +90,105 @@ users.post("/signin",async (c)=>{
     }
     
 })
+users.use("/me/*",async (c,next)=>{
+    const header = c.req.header("authorization")||"";
+    // Bearer token
+    const token=header.split(" ")[1];
+    if(!token){
+        c.status(403)
+        return c.json({error:"Unauthorized"});
+    }
+    try{
+        const response= await verify(token,c.env.JWT_Secret,"HS256");
+        if(response.id){
+            c.set("userid",String(response.id));
+            await next()
+        }else{
+            c.status(403)
+            return c.json({error:"Unauthorized"});
+        }
+    }
+    catch(e){
+        c.status(403)
+        return c.json({error:"Unauthorized"});
+    }
+})
 users.get("/me",async (c)=>{
     const prisma = new PrismaClient({
     accelerateUrl: c.env.ACCELERATE_URL,
     }).$extends(withAccelerate())
-    const header = c.req.header("authorization") || "";
-    if (!header.startsWith("Bearer ")) {
-        return c.json({ message: "Unauthorized" }, 401);
-    }
-    const token = header.slice(7);
-    const response = await verify(token, c.env.JWT_Secret, "HS256");
-    if (response && typeof response.id === "string") {
-        const User = await prisma.user.findUnique({
+    const userId=c.get("userid")
+    const User = await prisma.user.findUnique({
+        where:{
+            id: userId
+            }
+    });        
+    return c.json({ username: User?.name,description: User?.description}, 200);
+
+})
+users.put("/me",async(c)=>{
+    const authorID=c.get('userid')
+    const body= await c.req.json();
+    const prisma = new PrismaClient({
+        accelerateUrl: c.env.ACCELERATE_URL,
+    }).$extends(withAccelerate());
+    try{
+        const user= await prisma.user.update({
             where:{
-                id: response.id
+                id:authorID,
+            },
+            data: {
+                name:body.name,
+                description:body.description
+            }
+        })
+        return c.json({
+            id:user.id
+        },200)
+    }catch(e){
+        return c.json({
+            error:e
+        },401)
+    }
+})
+
+users.put("/me/password",async(c)=>{
+    const authorID=c.get('userid')
+    const body= await c.req.json();
+    const prisma = new PrismaClient({
+        accelerateUrl: c.env.ACCELERATE_URL,
+    }).$extends(withAccelerate());
+    try{
+        let user= await prisma.user.findUnique({
+            where:{
+                id:authorID
             }
         });
-        return c.json({ username: User?.name }, 200);
+        if(!user){
+            return c.json({ message: "User does'not exits" }, 404);
+        }
+        const isCorrectPassword = await bcrypt.compare(body.currentPassword,user.password);
+        if(!isCorrectPassword){
+            return c.json({ message: "Incorrect password" }, 401);
+        }
+        const hashedPassword=await bcrypt.hash(body.newPassword,5);
+        user= await prisma.user.update({
+            where:{
+                id:authorID,
+            },
+            data: {
+                password:hashedPassword
+            }
+        })
+        return c.json({
+            id:user.id
+        },200)
+    }catch(e){
+        return c.json({
+            error:e
+        },401)
     }
-    return c.json({ message: "Unauthorized" }, 401);
 })
+
 
 export default users;

@@ -7,7 +7,9 @@ import { Blog } from './pages/Blog'
 import { Blogs } from './pages/Blogs'
 import { Publish } from './pages/Publish'
 import { MyBlogs } from './pages/Myblogs'
+import {UserPage } from "./pages/UserPage"
 import { PrivateRoutes,PublicRoutes } from './components/Gaurds'
+
 
 
 
@@ -42,6 +44,11 @@ function App() {
       <Route path="/publish/:id" element={
       <PrivateRoutes>
           <Publish/>
+      </PrivateRoutes>
+      }/>
+      <Route path="/me" element={
+      <PrivateRoutes>
+          <UserPage/>
       </PrivateRoutes>
       }/>
     </Routes>

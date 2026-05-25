@@ -2,14 +2,15 @@ import { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router"
 import axios from 'axios';
 import { BACKEND_URL } from "../config";
-import { useAuth } from "../Auth";
+import { useAuth } from "../AuthContext";
 
 export const Auth=({ type }:{type:"signup"|"signin"})=>{
     const navigate= useNavigate();
     const [name,setName]=useState("");
     const [email,setEmail]=useState("");
     const [password,setPassword]=useState("");
-    
+    const auth=useAuth();
+
     async function sendRequest(){
         try{
             const response= await axios.post(`${BACKEND_URL}/v1/api/users/${type==="signup"?"signup":"signin"}`,{
@@ -20,9 +21,10 @@ export const Auth=({ type }:{type:"signup"|"signin"})=>{
             const jwt= response.data.jwt;
             console.log(jwt);
             localStorage.setItem("token",jwt);
-            useAuth()?.login(email);
+            auth?.login(email)
             navigate("/blogs")
         }catch(e){
+            console.log(e);
             alert(`Error while ${type==="signup"?"signup":"signin"}`)
         }
     }

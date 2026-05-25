@@ -17,6 +17,7 @@ model User {
   email String @unique
   name String?
   password String
+  description String @default("Writer at ByteWrite")
   posts Post[] 
 }
 
@@ -28,4 +29,5 @@ model Post{
   publishedate DateTime @default(now())
   author User @relation(fields: [authorId],references: [id])
   authorId String
+  isDeleted Boolean @default(false)
 }
