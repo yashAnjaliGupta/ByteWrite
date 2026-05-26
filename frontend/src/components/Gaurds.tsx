@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export const PrivateRoutes = ({ children }: { children: React.ReactNode }) => {
     const auth = useAuth();
@@ -8,7 +9,7 @@ export const PrivateRoutes = ({ children }: { children: React.ReactNode }) => {
 
     const { isAuthenticated, loading } = auth;
 
-    if (loading) return <div>Loading....</div>;
+    if (loading) return <LoadingSpinner/>;
     return isAuthenticated ? children : <Navigate to='/signin' />;
 }
 export const PublicRoutes = ({ children }: { children: React.ReactNode }) => {
@@ -18,6 +19,6 @@ export const PublicRoutes = ({ children }: { children: React.ReactNode }) => {
 
     const { isAuthenticated, loading } = auth;
 
-    if (loading) return <div>Loading....</div>;
+    if (loading) return <LoadingSpinner/>;
     return !isAuthenticated ? children : <Navigate to='/blogs' />;
 }

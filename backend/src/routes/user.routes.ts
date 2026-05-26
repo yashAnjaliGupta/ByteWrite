@@ -4,22 +4,27 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode,sign,verify } from "hono/jwt";
 import bcrypt from 'bcryptjs'
 import {z} from "zod";
+import {Resend} from "resend";
 
 const users= new Hono<{ 
     Bindings: {
         ACCELERATE_URL: string,
-        JWT_Secret: string
+        JWT_Secret: string,
+        RESEND_API_KEY: string,
+        KV: KVNamespace
     };
     Variables: {
         userid: string;
-    };  }>();
+    };  
+}>();
 
 
 
 const signupBody=z.object({
     name: z.string().min(5),
     email:z.email(),
-    password:z.string().min(8)
+    password:z.string().min(8),
+    otp:z.string().length(6)
 })
 const signinBody = z.object({
     email:z.email(),
@@ -36,7 +41,6 @@ users.post("/signup",async (c)=>{
     if(!success){
         return c.json({ message: "Incorrect Input" }, 409);
     }
-
     try{
         const user= await prisma.user.findUnique({
             where:{
@@ -47,6 +51,15 @@ users.post("/signup",async (c)=>{
             return c.json({ message: "User already exist" }, 409);
         }
         const hashedPassword=await bcrypt.hash(body.password,5);
+         await c.env.KV.get(`otp:${body.email}`).then((otp)=>{
+            if(otp!==null){
+                if(otp!==body.otp){
+                    return c.json({ message: "Invalid OTP" }, 401);
+                }
+            }else{
+                return c.json({ message: "OTP not found" }, 404);
+            }
+        });
         const createdUser=await prisma.user.create({
             data:{
                 name: body.name,
@@ -189,6 +202,132 @@ users.put("/me/password",async(c)=>{
         },401)
     }
 })
+users.post("/sendotp", async (c) => {
+    const body = await c.req.json()
+    const email = body.email
+    const resend = new Resend(c.env.RESEND_API_KEY);
+    const otp = Math.floor(
+        100000 + Math.random() * 900000
+    ).toString()
+    // Store in KV for 5 mins
+    await c.env.KV.put(
+        `otp:${email}`,
+        otp,
+        {
+            expirationTtl: 600
+        }
+    )
+    try{
+        const response = await resend.emails.send({
+                from: "support@yashguptaiiit.in",
+                to: email,
+                subject: "Welcome to ByteWrite",
+                html: `
+                <div
+                    style="
+                        background:#f5f7fb;
+                        padding:40px 20px;
+                        font-family:Inter,Arial,sans-serif;
+                    "
+                >
 
+                    <div
+                        style="
+                            max-width:520px;
+                            margin:auto;
+                            background:white;
+                            border-radius:16px;
+                            padding:40px;
+                            border:1px solid #e5e7eb;
+                        "
+                    >
+
+                        <div
+                            style="
+                                font-size:28px;
+                                font-weight:700;
+                                color:#111827;
+                                margin-bottom:10px;
+                            "
+                        >
+                            ByteWrite
+                        </div>
+
+                        <div
+                            style="
+                                font-size:18px;
+                                font-weight:600;
+                                color:#111827;
+                                margin-bottom:20px;
+                            "
+                        >
+                            Verify your email
+                        </div>
+
+                        <p
+                            style="
+                                color:#4b5563;
+                                line-height:1.7;
+                                font-size:15px;
+                                margin-bottom:30px;
+                            "
+                        >
+                            Use the verification code below to continue logging in to your ByteWrite account.
+                        </p>
+
+                        <div
+                            style="
+                                background:#111827;
+                                color:white;
+                                font-size:32px;
+                                font-weight:700;
+                                letter-spacing:8px;
+                                text-align:center;
+                                padding:18px;
+                                border-radius:14px;
+                                margin-bottom:30px;
+                            "
+                        >
+                            ${otp}
+                        </div>
+
+                        <p
+                            style="
+                                color:#6b7280;
+                                font-size:14px;
+                                line-height:1.6;
+                                margin-bottom:8px;
+                            "
+                        >
+                            This OTP is valid for 10 minutes.
+                        </p>
+
+                        <p
+                            style="
+                                color:#9ca3af;
+                                font-size:13px;
+                                line-height:1.6;
+                            "
+                        >
+                            If you did not request this code, you can safely ignore this email.
+                        </p>
+
+                    </div>
+
+                </div>
+                `
+        })
+        return c.json({
+                success: true,
+                response
+        })
+    }
+    catch(e){
+        return c.json({
+            success: false,
+            error: e
+        },500)
+    }
+})
 
 export default users;

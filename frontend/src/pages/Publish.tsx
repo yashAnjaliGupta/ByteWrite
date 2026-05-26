@@ -3,6 +3,7 @@ import { SimpleEditor } from '../editor/components/tiptap-templates/simple/simpl
 import { useState,useEffect } from 'react'
 import { BACKEND_URL } from '../config';
 import { useNavigate,  useParams } from 'react-router';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function Publish() {
     const navigate=useNavigate();
@@ -77,7 +78,7 @@ export function Publish() {
             console.error("Error publishing:", err);
         }
     }
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <LoadingSkeleton/>;
     return (
         <div className="min-h-screen bg-gray-50 px-6 py-5">
             <div className="mx-auto max-w-6xl">
