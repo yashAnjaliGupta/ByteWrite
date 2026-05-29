@@ -1,7 +1,7 @@
 to be done 
 update tailwind styling for mobile screens - done
 user info update page -Done
-images handling?
+images handling - Done
 email validation - Done
 loading-Done
 complete zod validations

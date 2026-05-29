@@ -4,7 +4,7 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode,sign,verify } from "hono/jwt";
 import {z} from "zod";
 import {generatePreview} from "../utils"
-
+import { AwsClient } from "aws4fetch"
 
 const createBlogBody=z.object({
     title: z.string().min(5),
@@ -19,7 +19,12 @@ const updateBlogBody = z.object({
 const blogs= new Hono<{ 
     Bindings: {
         ACCELERATE_URL: string,
-        JWT_Secret: string};
+        JWT_Secret: string,
+        AWS_ACCESS_KEY_ID: string,
+        AWS_SECRET_ACCESS_KEY: string,
+        AWS_BUCKET_NAME: string,
+        AWS_REGION: string
+    };
     Variables: {
         userid: string;
     }; }>();
@@ -194,6 +199,49 @@ blogs.delete("/:id",async (c)=>{
         },401)
     }
 });
+blogs.post("/generate-upload-url",async (c)=>{
+    const authorID=c.get('userid')
+    const body= await c.req.json();
+    const contentType = body.contentType;
+    if (!contentType.startsWith("image/")) {
+        return c.json({
+            error: "Only images allowed"
+        }, 400)
+    }
+    const extension = contentType.split("/")[1]; // e.g., "image/jpeg" -> "jpeg"
+    const key = `users/${authorID}/${crypto.randomUUID()}.${extension}`;
+    try{
+        const aws = new AwsClient({
+            region: c.env.AWS_REGION,
+            accessKeyId: c.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: c.env.AWS_SECRET_ACCESS_KEY,
+            service: "s3"
+        });
+        const url =`https://${c.env.AWS_BUCKET_NAME}.s3.${c.env.AWS_REGION}.amazonaws.com/${key}`
+        const signedRequest = await aws.sign(
+            new Request(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": contentType
+                }
+            }),{
+                aws: {
+                    signQuery: true,
+                }
+            }
+        )
+        return c.json({
+            uploadURL: signedRequest.url,
+            imageURL: url,
+            key:key
+        },200)
+    }catch(e){
+        console.log(e);
+        return c.json({
+            error:e
+        },401)
+    }
+})
 
 
 export default blogs;
