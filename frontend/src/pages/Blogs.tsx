@@ -11,7 +11,8 @@ export function Blogs(){
     }
     return (<>
     <Appbar/>
-    <div className="flex justify-center">
+    <div className="flex justify-center min-h-screen">
+    {blogs.length===0 && <div className="text-gray-500 text-lg mt-10">No blogs found. Be the first to publish!</div>}
     <div >
         {blogs.map( (blog)=>
         <BlogCard

@@ -1,0 +1,8 @@
+# robots.txt for ByteWrite
+# Allow all search engines to index the frontend and follow internal links.
+User-agent: *
+Allow: /
+
+# Change the sitemap URL to your actual deployed frontend domain.
+Sitemap: https://bytewrite.yashguptaiiit.in/sitemap.xml
+Host: https://bytewrite.yashguptaiiit.in

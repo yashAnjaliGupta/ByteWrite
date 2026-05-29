@@ -8,6 +8,7 @@ import { Publish } from './pages/Publish'
 import { MyBlogs } from './pages/Myblogs'
 import {UserPage } from "./pages/UserPage"
 import { PrivateRoutes,PublicRoutes } from './components/Gaurds'
+import { Footer } from './components/Footer'
 
 
 
@@ -51,6 +52,7 @@ function App() {
       </PrivateRoutes>
       }/>
     </Routes>
+    <Footer/>
     </BrowserRouter>
   )
 }
