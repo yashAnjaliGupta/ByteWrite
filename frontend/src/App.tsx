@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BrowserRouter,Routes,Route, Navigate } from 'react-router'
 import './App.css'
 import { Signup } from './pages/Signup'

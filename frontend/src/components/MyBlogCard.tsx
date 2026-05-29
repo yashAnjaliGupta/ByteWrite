@@ -28,7 +28,7 @@ export function MyBlogCard({
     const navigate = useNavigate();
     const [isPublished, setIsPublished] = useState(published);
     const [loading, setLoading] = useState(false);
-    const handleTogglePublish = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleTogglePublish = async () => {
         setLoading(true);
         const newStatus = !isPublished;
         try {
@@ -41,7 +41,7 @@ export function MyBlogCard({
                 }
             });
             setIsPublished(newStatus);
-            // navigate(`/blog/${id}`);
+            navigate(`/blog/${id}`);
         } catch (err) {
             console.error("Error toggling publish:", err);
         }

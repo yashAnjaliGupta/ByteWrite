@@ -65,14 +65,84 @@ import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Components ---
-import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
+// import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+import { MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 import { ExcalidrawNode } from "@/components/tiptap-node/excalidraw-node/excalidraw-node"
+import axios from "axios"
+import { BACKEND_URL } from "../../../../config"
+
+const handleImageUpload = async (
+    file: File
+): Promise<string> => {
+
+    try {
+
+        // STEP 1
+        // get presigned upload url
+
+        const response =
+            await axios.post(
+
+                `${BACKEND_URL}/v1/api/blogs/generate-upload-url`,
+
+                {
+                    contentType:
+                        file.type
+                },
+
+                {
+                    headers: {
+                        Authorization:
+`Bearer ${localStorage.getItem("token")}`
+                    }
+                }
+            )
+        console.log(response.data)
+        const {
+            uploadURL,
+            key
+        } = response.data
+
+        // STEP 2
+        // upload image directly to s3
+        console.log(uploadURL, file);
+        const uploadResponse =
+            await fetch(uploadURL, {
+
+                method: "PUT",
+
+                headers: {
+                    "Content-Type":
+                        file.type
+                },
+
+                body: file
+            })
+          console.log(uploadResponse)
+        if (!uploadResponse.ok) {
+
+            throw new Error(
+                "Upload failed"
+            )
+        }
+
+        // STEP 3
+        // return final public image url
+        const imageUrl =`https://d2mchqrdzfihei.cloudfront.net/${key}`
+        return imageUrl
+
+    } catch (error) {
+
+        console.log(error)
+
+        throw error
+    }
+}
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -246,7 +316,7 @@ export function SimpleEditor(
         limit: 3,
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
-      }),
+      })
       ,ExcalidrawNode
     ],
     content,
