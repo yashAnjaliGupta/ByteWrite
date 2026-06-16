@@ -2,10 +2,10 @@ import type { Blog } from "../hooks";
 import { formattedDate } from "./BlogCard";
 import { Avatar } from "./BlogCard";
 import { BlogViewer } from "./BlogViwer";
+import { ShareSection } from "./ShareSection";
 
 export function FullBlog({blog}:{blog:Blog}){
     const content=JSON.parse(blog.content)
-    
 
     return (<div className="w-full px-4 pt-10 sm:px-8 lg:px-16">
 
@@ -65,6 +65,9 @@ export function FullBlog({blog}:{blog:Blog}){
             <div className="pt-8">
                 <BlogViewer content={content} />
             </div>
+
+            {/* Share Section */}
+            <ShareSection blogId={blog.id} title={blog.title} />
         </div>
 
         {/* Desktop Author Sidebar */}
@@ -78,7 +81,7 @@ export function FullBlog({blog}:{blog:Blog}){
                 lg:block
             "
         >
-
+            
             <div className="sticky top-24">
 
                 <div className="mb-4 text-sm font-medium uppercase tracking-wide text-gray-400">

@@ -2,9 +2,15 @@ import { Appbar } from "../components/Appbar";
 import { BlogCard } from "../components/BlogCard";
 import { useBlogs } from "../hooks";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
+import { useEffect } from "react";
+import { resetMetaTags } from "../utils/metaTags";
 
 export function Blogs(){
     const {loading,blogs}=useBlogs();
+
+    useEffect(() => {
+        resetMetaTags();
+    }, []);
 
     if(loading){
         return (<LoadingSkeleton/>)

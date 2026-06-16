@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import users  from "./routes/user.routes";
 import blogs from "./routes/blog.routes";
 import blogsPublic from "./routes/blogPublic.routes";
+import preview from "./routes/preview.routes";
 import { cors } from 'hono/cors';
 
 
@@ -19,7 +20,8 @@ app.use(
       "POST",
       "PUT",
       "DELETE",
-      "OPTIONS"
+      "OPTIONS",
+      "PATCH"
     ],
     allowHeaders: [
       "Content-Type",
@@ -34,6 +36,7 @@ app.get('/',(c)=>{
 app.route('/v1/api/users',users);
 app.route('/v1/api/publicblogs',blogsPublic);
 app.route('/v1/api/blogs',blogs);
+app.route("/share/blog", preview);
 
 
 
