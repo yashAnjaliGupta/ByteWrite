@@ -1,4 +1,4 @@
-# Medium Clone Project
+# ByteWrite Project
 
 A full-stack Medium-style blogging web app with a React + Vite frontend and a Cloudflare Workers backend.
 
